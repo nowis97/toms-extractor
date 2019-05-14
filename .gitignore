@@ -1,0 +1,6 @@
+*.txt
+*.exe
+*.pyc
+
+/__pycache__/
+/.idea/
