@@ -2,7 +2,7 @@ import pandas as pd
 from Utils import Utils
 import datetime
 
-""" Este modulo se encarga de la limpieza de los excels
+""" Este modulo se encarga de la limpieza de los Excels
 """
 
 
@@ -96,14 +96,14 @@ def site_equipment_configurations(path):
     return site_equipment_configurations_df
 
 
-def fleet_inspection_work_order(path,connection):
-
-    fleet_inspection_work_order_df = pd.read_excel(path)
+def fleet_inspection_work_order(df_diff,connection):
 
 
-    fleet_inspection_work_order_df = fleet_inspection_work_order_df[['Organization','Work Order', 'Description', 'Lock On', 'Lock Off',
+
+
+    fleet_inspection_work_order_df = df_diff[['Organization','Work Order', 'Description', 'Lock On', 'Lock Off',
                                                                      'Status', 'Sched. End Date', 'Date Completed',
-                                                                     'Date Created', 'Created By']]
+                                                                     'Date Created', 'Created By','WO Effective Date']]
 
     fleet_inspection_work_order_df = fleet_inspection_work_order_df.rename(index=str, columns={
         'Organization':'organization',
@@ -115,7 +115,8 @@ def fleet_inspection_work_order(path,connection):
         'Sched. End Date': 'schedule_end_time',
         'Date Completed': 'date_completed',
         'Date Created': 'date_created',
-        'Created By': 'created_by'
+        'Created By': 'created_by',
+        'WO Effective Date':'wo_effective_date'
     })
 
     return fleet_inspection_work_order_df
@@ -185,16 +186,16 @@ def performance_tire_dashboard(path, connection):
     return performance_exists, last_rows_envios_df
 
 
-def performance(path, connection):
-    performance_df = pd.read_excel(path)
+def performance(df_diff, connection):
+    #performance_df = pd.read_excel(path)
     #performance_df_db = pd.read_sql_table('tire', connection)
     #performance_organization_tire_df_db = pd.read_sql_table('organization_tire', connection)
 
 
-    load_performance_tire_df = performance_df[['Organization','Tire ID','Status',
+    load_performance_tire_df = df_diff[['Organization','Tire ID','Status',
                                                'First Fitment Date','Size','Compound',
                                                'RTD Average','OTD','Hours','Distance',
-                                               'Scrap Date', 'Scrap Reason Description','Pattern'
+                                               'Scrap Date', 'Scrap Reason Description','Pattern',
                                                'Manufacturer Code','RTD - Inner','RTD - Outer','RTD Average'
                                                ]]
 
@@ -221,10 +222,10 @@ def performance(path, connection):
 
     return load_performance_tire_df
 
-def tires_installed_by_date(path):
-    tires_installed_by_date_df = pd.read_excel(path)
+def tires_installed_by_date(df_diff):
+    #tires_installed_by_date_df = pd.read_excel(path)
 
-    tires_installed_to_load_df = tires_installed_by_date_df[['Organization','Location','Tire ID','Previous Status',
+    tires_installed_to_load_df = df_diff[['Organization','Location','Tire ID','Previous Status',
                                                              'Last Mounted Date','Hours']]
 
     tires_installed_to_load_df = tires_installed_to_load_df.rename(index=str, columns = {

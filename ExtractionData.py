@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from pathlib import PureWindowsPath
 import logging
-
+import pandas
 
 class ExtractionData:
     def __init__(self, toms):
@@ -20,7 +20,25 @@ class ExtractionData:
             ('.x-btn-icon-el.x-btn-icon-el-gridtoolbar-toolbar-small.exportExcel ')
         button_export_excel.click()
 
-    def get_path_file_download(self, name_file, cmp_function):
+    def __diff_df_between_excels_downloaded(self, name_file, cmp_function):
+        paths = WebDriverWait(self.toms.driver, 120, 1).until(Utils.every_downloads_chrome)
+        downloaded_excel_path = paths[0]
+        path_win = PureWindowsPath(downloaded_excel_path)
+        path_win_dir = str(path_win).strip(path_win.name)
+
+        if not os.path.exists(path_win_dir + name_file + '.xlsx'):
+            os.rename(path_win, path_win_dir + name_file + '.xlsx')
+            return pandas.read_excel(path_win_dir + name_file + '.xlsx')
+        elif not cmp_function(path_win, path_win_dir + name_file + '.xlsx'):
+            diff_df_excels = Utils.diff_between_excel_files(path_win,path_win_dir + name_file + '.xlsx')
+            os.remove(path_win_dir + name_file + '.xlsx')
+            os.rename(path_win, path_win_dir + name_file + '.xlsx')
+            return diff_df_excels
+
+        os.remove(path_win)
+        return pandas.read_excel(path_win_dir + name_file + '.xlsx')
+
+    def get_path_file_download(self,name_file,cmp_function):
         paths = WebDriverWait(self.toms.driver, 120, 1).until(Utils.every_downloads_chrome)
         downloaded_excel_path = paths[0]
         path_win = PureWindowsPath(downloaded_excel_path)
@@ -139,11 +157,11 @@ class ExtractionData:
             ('.x-btn-icon-el.x-btn-icon-el-gridtoolbar-toolbar-small.exportExcel ')
         button_export_excel.click()
 
-        path = self.get_path_file_download('performance', Utils.cmp_excel_files_by_rtd_col)
+        df_diff = self.__diff_df_between_excels_downloaded('performance', Utils.cmp_excel_files_by_rtd_col)
 
         self.toms.go_to_main_page()
 
-        return path
+        return df_diff
 
     def get_performance_smart(self):
         self.toms.tire_dashboard()
@@ -198,7 +216,7 @@ class ExtractionData:
         time.sleep(2)
         self.toms.driver.switch_to.frame(iframe)
         time.sleep(5)
-        input_box_fiwo= self.toms.driver.find_element_by_xpath("//input[@value='Planned']")
+        input_box_fiwo= self.toms.driver.find_element_by_xpath("//input[@value='All Records']")
         input_box_fiwo.send_keys('Inspections')
         input_box_fiwo.send_keys(Keys.ENTER)
 
@@ -212,9 +230,9 @@ class ExtractionData:
             return None
         time.sleep(3)
         self.__click_excel_button()
-        path = self.get_path_file_download('fiwo', Utils.cmp_excel_files_by_rows_cols)
+        df_diff = self.__diff_df_between_excels_downloaded('fiwo', Utils.cmp_excel_files_by_rows_cols)
         self.toms.go_to_main_page()
-        return path
+        return df_diff
 
     def get_tires_installed_by_date(self):
         self.toms.tire_dashboard()
@@ -234,6 +252,6 @@ class ExtractionData:
 
         self.__click_excel_button()
 
-        path = self.get_path_file_download('tires_installed',Utils.cmp_excel_files_by_rows_cols)
+        df_diff = self.__diff_df_between_excels_downloaded('tires_installed',Utils.cmp_excel_files_by_rows_cols)
         self.toms.go_to_main_page()
-        return path
+        return df_diff

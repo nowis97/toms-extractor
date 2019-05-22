@@ -53,9 +53,9 @@ class DataBasePopulate:
             inspections_organization = Cleaner.ocurrences_inspection(path, self.connection)
             self.insert_or_ignore_rows(inspections_organization, 'inspection', 'append')
 
-    def insert_inspections(self, path):
+    def insert_inspections(self, df_diff):
 
-        inspection_df = Cleaner.fleet_inspection_work_order(path, self.connection)
+        inspection_df = Cleaner.fleet_inspection_work_order(df_diff, self.connection)
 
         self.connection.connect().execution_options(autocommit=True).execute(text('delete from inspection'))
         inspection_df.to_sql('inspection', con=self.connection, if_exists='append', index=False)
@@ -129,15 +129,15 @@ class DataBasePopulate:
         cursor.close()
         conn.close()
 
-    def insert_tires_installed_by_date(self,path):
-        tires_installed_by_date_df = Cleaner.tires_installed_by_date(path)
+    def insert_tires_installed_by_date(self,df_diff):
+        tires_installed_by_date_df = Cleaner.tires_installed_by_date(df_diff)
 
         self.connection.connect().execution_options(autocommit=True).execute(text('delete from tires_installed'))
         tires_installed_by_date_df.to_sql(name='tires_installed', con=self.connection, if_exists='append',index=False)
 
-    def insert_or_update_performance(self, path):
+    def insert_or_update_performance(self, df_diff):
         self.connection.connect().execution_options(autocommit=True).execute(text('delete from tire'))
-        update_tire_df = Cleaner.performance(path, self.connection)
+        update_tire_df = Cleaner.performance(df_diff, self.connection)
         update_tire_df.to_sql(name='tire', con=self.connection, if_exists='append', index=False)
 
 
