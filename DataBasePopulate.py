@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 import Cleaner
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
-import pyodbc
 import pandas as pd
 
 
@@ -56,32 +55,11 @@ class DataBasePopulate:
     def insert_inspections(self, df_diff):
 
         inspection_df = Cleaner.fleet_inspection_work_order(df_diff, self.connection)
-
-        self.connection.connect().execution_options(autocommit=True).execute(text('delete from inspection'))
+        #self.connection.connect().execution_options(autocommit=True).execute(text('delete from inspection'))
         inspection_df.to_sql('inspection', con=self.connection, if_exists='append', index=False)
 
 
-        #organization_inspection_df.to_sql('organization_inspection', con=self.connection, if_exists='append',
-        #                                     index=False)
-
-        """upsert_query = 'exec UpsertInspection :id,:desc,:lon,:loff,:status,:set,:dcompleted,:dcreated,:cb'
-
-        for i in inspection_df.itertuples(index=False, name='Inspection'):
-
-            self.connection.connect().execution_options(autocommit=True).execute(text(upsert_query), {
-                'id': i[0],
-                'desc': i[1],
-                'lon': i[2] if i[2] is not pd.NaT else None,
-                'loff': i[3] if i[3] is not pd.NaT else None,
-                'status': i[4],
-                'set': i[5] if i[5] is not pd.NaT else None,
-                'dcompleted': i[6] if i[6] is not pd.NaT else None,
-                'dcreated': i[7] if i[7] is not pd.NaT else None,
-                'cb': i[8]
-            })"""
-
-
-    def insert_or_ignore_rows(self, df, ne, ie):
+    def __insert_or_ignore_rows(self, df, ne, ie):
         j = 0
         for i in range(len(df)):
             try:
@@ -103,43 +81,37 @@ class DataBasePopulate:
 
         print('Se han omitido ', j, ' columnas de ', ne)
 
-    def insert_equipments(self, path):
-        equipments_df, relationship_organization_equipment = Cleaner.equipments_organization_equipment(path)
+    def insert_equipments(self, df_diff):
+        equipments_df = Cleaner.equipments_organization_equipment(df_diff)
+        equipments_df.to_sql('equipment',if_exists='append',con=self.connection,index=False)
 
-        self.insert_or_ignore_rows(equipments_df, 'equipment', 'append')
-        self.insert_or_ignore_rows(relationship_organization_equipment, 'organization_equipment', 'append')
 
     def update_performance_from_dashboard_tire(self, path):
-        performance_df, last_rows_performance_db = Cleaner.performance_tire_dashboard(path, self.connection)
-        conn = pyodbc.connect(self.string_connection_pyodb, autocommit=True)
-        cursor = conn.cursor()
+        performance_df = Cleaner.performance_tire_dashboard(path, self.connection)
+        # conn = pyodbc.connect(self.string_connection_pyodb, autocommit=True)
+        # cursor = conn.cursor()
 
-        list_insert = []
+        query = text("UPDATE Performance SET [Fecha De ultima inspeccion] = :fui, [RTD Actual] = :rtd, [Km Actual] = :km, [horas actuales] = :ha,[estado actual] = :ea where [Serie] = :serie")
 
-        for i in performance_df.itertuples():
-            j = tuple(i)
-            list_insert.append((None if j[3] is pd.NaT else str(j[3]),
-                                j[4], j[5], j[2], j[-1], j[6], j[6]))
+        for i in performance_df.itertuples(index=False):
+            self.connection.connect().execution_options(autocommit=True).execute(query, {
+                'fui': None if i[2] is pd.NaT else str(i[2]),
+                'rtd':i[3],
+                'km':i[4] if not pd.isna(i[4]) else 0,
+                'ha':i[1],
+                'ea':i[-2],
+                'serie':i[-1]
+            })
 
-        cursor.executemany(
-            'UPDATE Performance SET [Fecha De ultima inspeccion] = ?, [RTD Actual] = ?, [Km Actual] = ?, [horas actuales] = ?,'
-            '[estado actual] = ? where [Serie] = ? and  #Envios = (SELECT max(#Envios) from Performance where [Serie] = ?) ',
-            list_insert)
-
-        cursor.close()
-        conn.close()
-
-    def insert_tires_installed_by_date(self,df_diff):
+    def insert_tires_installed_by_date(self, df_diff):
         tires_installed_by_date_df = Cleaner.tires_installed_by_date(df_diff)
-
         self.connection.connect().execution_options(autocommit=True).execute(text('delete from tires_installed'))
-        tires_installed_by_date_df.to_sql(name='tires_installed', con=self.connection, if_exists='append',index=False)
+        tires_installed_by_date_df.to_sql(name='tires_installed', con=self.connection, if_exists='append', index=False)
 
     def insert_or_update_performance(self, df_diff):
-        self.connection.connect().execution_options(autocommit=True).execute(text('delete from tire'))
+        #self.connection.connect().execution_options(autocommit=True).execute(text('delete from tire'))
         update_tire_df = Cleaner.performance(df_diff, self.connection)
         update_tire_df.to_sql(name='tire', con=self.connection, if_exists='append', index=False)
-
 
     """
         list_insert = []

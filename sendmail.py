@@ -1,6 +1,7 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import schedule
 class SendEmail:
     email = ''
     port = 0
@@ -35,10 +36,15 @@ class SendEmail:
         self.server.sendmail(self.email,to_email,self.message.as_string())
         self.server.close()
 
+def main():
+    se = SendEmail('toms.extractor.log@gmail.com', 'Kaltire.2019', 'smtp.gmail.com:587')
+    se.send_email('se.the.nowis@gmail.com', 'holaa', 'mensaje de prueba')
+
 
 if __name__ == '__main__':
-    se = SendEmail('toms.extractor.log@gmail.com','Kaltire.2019','smtp.gmail.com:587')
-    se.send_email('se.the.nowis@gmail.com','holaa','mensaje de prueba')
+    schedule.every(3).minute.do(main)
+
+
 
 
 

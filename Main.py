@@ -49,6 +49,7 @@ def fill_smart(user_db,pass_db,name_db,ip_db,user_web,pass_web):
         toms.login()
         toms.existing_session()
         db.update_performance_from_dashboard_tire(ext.get_performance_smart())
+
         toms.logout()
         toms.driver.close()
     except Exception as e:
@@ -73,11 +74,15 @@ def main(user_db,pass_db,name_db,ip_db,user_web,pass_web):
 
     toms.login()
     time.sleep(1)
+
     toms.existing_session()
     time.sleep(5)
-    db.insert_or_update_performance(ext.get_performance_from_tire_dashboard())
-    db.insert_inspections(ext.get_fleet_inspection_work_order())
-    db.insert_tires_installed_by_date(ext.get_tires_installed_by_date())
+    #db.insert_or_update_performance(ext.get_performance_from_tire_dashboard())
+
+    #db.insert_inspections(ext.get_fleet_inspection_work_order())
+    #db.insert_tires_installed_by_date(ext.get_tires_installed_by_date())
+    db.insert_equipments(ext.get_equipments())
+    toms.driver.close()
 
     print('Ha terminado')
     #except Exception as e:

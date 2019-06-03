@@ -87,17 +87,24 @@ class ExtractionData:
     def get_equipments(self):
         self.toms.equipment()
         time.sleep(0.5)
-        iframe = self.toms.driver.find_element_by_tag_name('iframe')
+        combo_box_input = self.toms.driver.find_element_by_xpath("//input[@value='Installed Tires and Rims']")
+        combo_box_input.send_keys('Installed Tires')
+        combo_box_input.send_keys(Keys.ENTER)
 
-        self.toms.driver.switch_to.frame(iframe)
-        time.sleep(0.5)
-        button_export_excel = self.toms.driver.find_element_by_css_selector \
-            ('.x-btn-icon-el.x-btn-icon-el-gridtoolbar-toolbar-small.exportExcel ')
-        time.sleep(0.5)
-        button_export_excel.click()
-        path = self.get_path_file_download('equipments', Utils.cmp_excel_files_by_rows_cols)
 
-        return path
+        time.sleep(0.5)
+        try:
+            WebDriverWait(self.toms.driver, 3).until(
+                expected_conditions.invisibility_of_element((By.CLASS_NAME, 'busy-indicator')))
+            logging.info('Se cargo la tabla de Installed by Date')
+        except TimeoutException:
+            logging.exception('Se demoro demasiado', TimeoutException)
+            return None
+
+        self.__click_excel_button()
+        df_diff = self.__diff_df_between_excels_downloaded('equipments', Utils.cmp_excel_files_by_rows_cols)
+
+        return df_diff
 
     def get_site_equipment_configurations(self):
         self.toms.site_equipment_configurations()
@@ -216,7 +223,7 @@ class ExtractionData:
         time.sleep(2)
         self.toms.driver.switch_to.frame(iframe)
         time.sleep(5)
-        input_box_fiwo= self.toms.driver.find_element_by_xpath("//input[@value='All Records']")
+        input_box_fiwo= self.toms.driver.find_element_by_xpath("//input[@value='Planned']")
         input_box_fiwo.send_keys('Inspections')
         input_box_fiwo.send_keys(Keys.ENTER)
 

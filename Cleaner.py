@@ -97,11 +97,11 @@ def site_equipment_configurations(path):
 
 
 def fleet_inspection_work_order(df_diff,connection):
+    fleet_inspection_work_order_df = df_diff.sort_values('Date Completed', ascending=False) \
+        .drop_duplicates(subset='Work Order', keep='first')
 
 
-
-
-    fleet_inspection_work_order_df = df_diff[['Organization','Work Order', 'Description', 'Lock On', 'Lock Off',
+    fleet_inspection_work_order_df = fleet_inspection_work_order_df[['Organization','Work Order', 'Description', 'Lock On', 'Lock Off',
                                                                      'Status', 'Sched. End Date', 'Date Completed',
                                                                      'Date Created', 'Created By','WO Effective Date']]
 
@@ -123,41 +123,34 @@ def fleet_inspection_work_order(df_diff,connection):
 
 
 
-def equipments_organization_equipment(path):
+def equipments_organization_equipment(df_diff):
     """
     Limpia el excel de las organizations
     :param path: la ruta del excel
     :return: DataFrame
     """
-    equipments_df = pd.read_excel(path)
 
-    equipments_df = equipments_df.drop(columns=['Department', 'Axle 1 Rotation Alert',
-                                                'Axle 2 Rotation Alert', 'Axle 3 Rotation Alert', 'Dispatch'])
+
+    equipments_df = df_diff
+
 
     equipments_df = equipments_df.rename(index=str, columns={
-        'Fleet Unit #': 'number_fleet_unit',
-        'Box/Bucket Configuration': 'box_bucket_configuration',
-        'Equipment Category': 'equipment_category',
-        'Equipment Usage': 'equipment_usage',
+        'Equipment':'id',
+        'Equipment Description':'description',
+        'Equipment Status':'status',
+        'Last Inspection Effective Date':'last_inspection_effective_date',
+        'Organization':'organization',
+        'Position RTD Average':'current_rtd_average',
+        'Position RTD Inner':'current_rtd_inner',
+        'Position RTD Outer':'current_rtd_outer',
+        'Tire':'tire_id',
+        'Tire Brand':'tire_brand_id',
+        'Position Sort':'position_sort',
+        'Position Key':'position_key',
+        'Position':'position'
     })
+    return equipments_df
 
-    equipments_df = equipments_df.rename(str.lower, axis='columns')
-
-    # equipments_df['dispatch'] = equipments_df['dispatch'].map({
-    #   'YES': True,
-    #  'NO': False
-    # })
-
-    relationship_organization_equipment_df = pd.DataFrame(equipments_df[['site', 'number_fleet_unit']])
-
-    equipments_df = equipments_df.drop(columns=['site'])
-
-    relationship_organization_equipment_df = relationship_organization_equipment_df.rename(index=str, columns={
-        'site': 'organizationorganization_name',
-        'number_fleet_unit': 'equipmentnumber_fleet_unit'
-    })
-
-    return equipments_df, relationship_organization_equipment_df
 
 
 def rotation_planning_detailed(path):
@@ -167,7 +160,6 @@ def rotation_planning_detailed(path):
 
 def performance_tire_dashboard(path, connection):
     """
-
     :param path:
     :param connection:
     :return:
@@ -175,15 +167,11 @@ def performance_tire_dashboard(path, connection):
     performance_df = pd.read_excel(path)
     performance_db_df = pd.read_sql_table('Performance', connection, 'dbo')
 
-    last_rows_envios_df = performance_db_df.iloc[performance_db_df.groupby('Serie').apply(
-        lambda x: x['#Envios'].idxmax()
-    )]
+    performance_exists = performance_df.loc[(performance_df['Casing Serial No'].isin(performance_db_df['Serie']) | \
+                                             (performance_df['Tire ID'].isin(performance_db_df['Serie'])))]
 
-    performance_exists = performance_df.loc[performance_df['Tire ID'].isin(
-        last_rows_envios_df['Serie'].tolist()
-    )]
 
-    return performance_exists, last_rows_envios_df
+    return performance_exists
 
 
 def performance(df_diff, connection):
@@ -196,8 +184,8 @@ def performance(df_diff, connection):
                                                'First Fitment Date','Size','Compound',
                                                'RTD Average','OTD','Hours','Distance',
                                                'Scrap Date', 'Scrap Reason Description','Pattern',
-                                               'Manufacturer Code','RTD - Inner','RTD - Outer','RTD Average'
-                                               ]]
+                                               'Manufacturer Code','RTD - Inner','RTD - Outer','RTD Average','Purchase Cost',
+                                        'Min TD','Catalogue #','Casing Serial No']]
 
 
     load_performance_tire_df = load_performance_tire_df.rename(index=str, columns={
@@ -217,7 +205,11 @@ def performance(df_diff, connection):
         'Manufacturer Code': 'manufacture_code',
         'RTD - Inner':'rtd_inner',
         'RTD - Outer':'rtd_outer',
-        'RTD Average':'rtd_average'
+        'RTD Average':'rtd_average',
+        'Purchase Cost':'purchase_cost',
+        'Min TD':'min_td',
+        'Catalogue #':'n_catalogue',
+        'Casing Serial No':'casing_serial_no'
     })
 
     return load_performance_tire_df
