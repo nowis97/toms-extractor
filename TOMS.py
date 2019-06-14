@@ -85,15 +85,23 @@ class TOMS:
         self.__wait_to_load('Se ingreso a Organizations', 5)
 
     def logout(self):
-        button_down_array = self.driver. \
-            find_element_by_css_selector(
-            '.x-btn-button.x-btn-button-mainmenuButton-toolbar-small.x-btn-no-text.x-btn-button-center')
-        button_down_array.click()
-
+        self.__click_button_nav_bar_left()
         button_logout = self.__get_element_by_inside_text('Logout')
         button_logout.click()
 
         self.driver.close()
+
+    def equipment_dashboard(self):
+        self.__click_button_nav_bar_left()
+        self.__get_element_by_inside_text('Assets').click()
+        time.sleep(0.5)
+        self.__get_element_by_inside_text('Dashboards').click()
+        time.sleep(0.5)
+        self.__get_element_by_inside_text('Equipment Dashboard').click()
+        self.__wait_to_load('Se ha ingresado a equipment dashboard',5)
+        self.__get_element_by_inside_text('Dashboards').click()
+        self.__get_element_by_inside_text('Assets').click()
+
 
     def equipment(self):
         button_array_down_assets = self.__get_element_by_inside_text('Assets')
@@ -104,7 +112,7 @@ class TOMS:
         button_equipment = self.__get_element_by_inside_text('Equipment')
         button_equipment.click()
 
-        self.__wait_to_load('Se ingreso a Equipment', 4)
+        self.__wait_to_load('Se ingreso a Equipment', 6)
 
     def go_to_main_page(self):
         try:
@@ -114,23 +122,22 @@ class TOMS:
         except TimeoutException:
             logging.error('Hubo un Error', TimeoutException)
             return False
-        button_down_array = self.driver \
-            .find_elements_by_css_selector(
-            '.x-btn.x-unselectable.x-box-item.x-toolbar-item.uft-id-session-menu_button.x-btn-mainmenuButton-toolbar-small')[
-            0]
-        time.sleep(1)
-        button_down_array.click()
 
-        button_start_center = self.driver.find_element_by_id('menu-1034').find_element_by_id('menuitem-1035-textEl')
+
+        button_start_center = self.__get_element_by_inside_text('Start Center')
         button_start_center.click()
         try:
             WebDriverWait(self.driver, 10).until(
                 expected_conditions.invisibility_of_element((By.CLASS_NAME, 'busy-indicator')))
             logging.info('Se ha ingresado con exito')
+            self.__click_button_nav_bar_left()
             return True
         except TimeoutException:
+            self.__click_button_nav_bar_left()
             logging.error('Hubo un Error', TimeoutException)
             return False
+
+
 
     def change_department_default(self, department_prefix, organization_name):
         button_admin = self.driver.find_element_by_id('button-1043-btnEl')
@@ -230,18 +237,33 @@ class TOMS:
             logging.exception(TimeoutException)
             return False
 
+    def __click_button_nav_bar_left(self):
+        try:
+            menu_bar_left = self.driver.find_element_by_xpath("//span[@class='icon app-header']")
+            time.sleep(1)
+            menu_bar_left.click()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
     def tire_dashboard(self):
+        self.__click_button_nav_bar_left()
         button_assets = self.__get_element_by_inside_text('Assets')
         button_assets.click()
         time.sleep(0.5)
         button_arrow_right_dashboards = self.__get_element_by_inside_text('Dashboards')
-
         button_arrow_right_dashboards.click()
         time.sleep(0.5)
         button_tire_dashboard = self.__get_element_by_inside_text('Tire Dashboard')
         time.sleep(0.5)
         button_tire_dashboard.click()
         self.__wait_to_load('Se ingreso a tire dashboard', 5)
+        button_arrow_right_dashboards = self.__get_element_by_inside_text('Dashboards')
+        button_arrow_right_dashboards.click()
+        button_assets = self.__get_element_by_inside_text('Assets')
+        button_assets.click()
+
 
     def existing_session(self):
         try:
@@ -257,6 +279,12 @@ class TOMS:
             return False
 
     def fleet_inspection_work_order(self):
+        self.__click_button_nav_bar_left()
+        button_work_management = self.__get_element_by_inside_text('Work Management')
+        button_work_management.click()
         button_fiwo = self.__get_element_by_inside_text('Fleet Inspection Work Order')
         button_fiwo.click()
         self.__wait_to_load('Se ingreso a fleet inspection work order', 5)
+        button_work_management = self.__get_element_by_inside_text('Work Management')
+        button_work_management.click()
+

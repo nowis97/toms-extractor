@@ -131,10 +131,10 @@ def equipments_organization_equipment(df_diff):
     """
 
 
-    equipments_df = df_diff
 
 
-    equipments_df = equipments_df.rename(index=str, columns={
+
+    equipments_df = df_diff.rename(index=str, columns={
         'Equipment':'id',
         'Equipment Description':'description',
         'Equipment Status':'status',
